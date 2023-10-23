@@ -48,7 +48,7 @@ namespace kelimeciniz
 
 
 
-        public GoogleSheets()
+        public GoogleSheets()//Class çağırıldığında çalışmasını istediğim constructor(Bazı verileri çekip ön belleğe almak için.)
         {
             using (var stream = new FileStream("C:\\Users\\as\\source\\repos\\kelimeciniz\\client_secret_950495088287-0n98o9v2m357pvrif86ffbhspb73dg0d.apps.googleusercontent.com.json", FileMode.Open, FileAccess.Read))
             {
@@ -66,7 +66,7 @@ namespace kelimeciniz
                 ApplicationName = appName,//Uygulamanın ismi
             });
 
-           
+           //Api'ye istek atıyorum
             SpreadsheetsResource.ValuesResource.GetRequest request1 =
                service.Spreadsheets.Values.Get(spreadsheetId, sutun1);
 
@@ -83,6 +83,7 @@ namespace kelimeciniz
             responseSearchWord = reqSearch.Execute();
             responseAramaKelime = reqArama.Execute();
 
+            //değerleri listelere çekiyorum.
             sutunAVeri = responseSutunA.Values;
             sutunBVeri = responseSutunB.Values;
             columnWordData = responseSearchWord.Values;
@@ -91,6 +92,7 @@ namespace kelimeciniz
 
         public Tuple<List<string>, List<string>> KelimeAra(string AranacakWord)
         {
+            //Kendi Database'imde bulunan değerleri çekip atıyorum listelere
             List<string> sonucA = new List<string>();
             List<string> sonucB = new List<string>();
 
@@ -116,10 +118,10 @@ namespace kelimeciniz
                 }
             }
 
-            if (!kelimeBulundu)
+            if (!kelimeBulundu)//Eğer database'imde aradığım kelime yok ise api ile çekiyorum veriyi.
             {
                 sonucA.Add(KelimeDuzelt(AranacakWord));
-                sonucB.Add(EnglishToTurkish(AranacakWord).ToString()); // EnglishToTurkish metodunu await ile bekletin
+                sonucB.Add(Ceviri(AranacakWord,false).ToString()); 
             }
 
             var uniqueSonucA = new HashSet<string>(sonucA);
@@ -127,10 +129,42 @@ namespace kelimeciniz
 
             return new Tuple<List<string>, List<string>>(uniqueSonucA.ToList(), uniqueSonucB.ToList());
         }
+        /// <summary>
+        /// Bu overloading methodu direkt olarak ingilizceden türkçeye arama yapmamız için oluşturduğum bir kod.
+        /// tr adlı değişken true olursa devreye girer.
+        /// </summary>
+        /// <param name="kelime"></param>
+        /// <param name="tr"></param>
+        /// <returns></returns>
+        public string KelimeAra(string kelime,bool tr)
+        {
+            string result = Ceviri(kelime,true).ToString();
+
+            return result; 
+        }
+        /// <summary>
+        /// Rastgele kelime ve anlamını çekmek için oluşturduğum method. Sözlükten veri çekilmesini istiyorsanız değişken true olmalı. Veri ekleyerek oluşturduğumuz listeden veri çekmek için false olması gerekiyor.
+        /// </summary>
+        /// <param name="VeritabaniMi"></param>
+        /// <returns></returns>
+        public Tuple<string,string> RastgeleKelimeGetirVTOrMyList(bool VeritabaniMi)
+        {
+            //kaç satırlık veri var bunların değerini çekiyorum.
+            int sonsatirMyList = sutunAVeri.Count();
+            int sonsatirVT = columnKelimeVeri.Count();
+
+            Random rn = new Random();
+            int hangiSatirMyList = rn.Next(0, sonsatirMyList);//veri sayısına göre rastgele bir satırdan veri çekmeyi istiyorum.
+            int hangiSatirVT = rn.Next(0, sonsatirVT);
+
+            string kelime = VeritabaniMi ? columnKelimeVeri[hangiSatirVT][0].ToString(): sutunAVeri[hangiSatirMyList][0].ToString();//Eğer veritabaniMi sorgusu true gelirse kendi sözlüğümden veri çekip değişkene atayacağım değilse sayfa1'de bulunan kendi eklediğim kelimelerden veri çekip değişkene atayacağım.
+            string word = VeritabaniMi ? columnWordData[hangiSatirVT][0].ToString() : sutunBVeri[hangiSatirMyList][0].ToString();//aynı mantıkla kelimenin anlamını çekiyorum.
+
+            return Tuple.Create(KelimeDuzelt(kelime), KelimeDuzelt(word));//verileri Tuple nesnesine çevirip gönderiyorum.
+        }
 
 
-
-        private string KelimeDuzelt(string kelime)
+        private string KelimeDuzelt(string kelime)//Sayfama veri eklerken bu formatta eklensin istiyorum.
         {
             string sonuc = char.ToUpper(kelime[0]) + kelime.Substring(1).ToLower();
             return sonuc;
@@ -146,13 +180,13 @@ namespace kelimeciniz
 
             for (int i = 0; i < words.Length; i++)
             {
-                if (word.ToLower() == words[i].ToLower())
+                if (word.ToLower() == words[i].ToLower())//Eğer database'imde aradığım kelime varsa bu çalışacak yoksa aşağıdaki
                 {
                     kelime = KelimeDuzelt(kelimeler[i]);
                 }
                 else
                 {
-                    kelime = EnglishToTurkish(word).ToString(); // EnglishToTurkish metodunu asenkron olarak çağırın
+                    kelime = Ceviri(word, false).ToString(); // EnglishToTurkish metodunu kullanarak arama yapıyorum.
                 }
             }
             // Veriyi eklemek için gereken parametreleri oluştur
@@ -213,11 +247,13 @@ namespace kelimeciniz
         }
 
 
-        private string EnglishToTurkish(string text)
+        private string Ceviri(string text,bool tr)
         {
             using (HttpClient client = new HttpClient())
             {
-                string apiUrl = $"https://api.mymemory.translated.net/get?q={text}&langpair=en|tr";
+                string ceviridil = tr ? "tr|en" : "en|tr";
+                string apiUrl = $"https://api.mymemory.translated.net/get?q={text}&langpair={ceviridil}";
+
                 HttpResponseMessage response = client.GetAsync(apiUrl).Result; // Bekleyerek sonucu al
 
                 if (response.IsSuccessStatusCode)

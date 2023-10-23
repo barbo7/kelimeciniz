@@ -46,7 +46,7 @@ namespace kelimeciniz
             listBox1.Items.Clear();
             listBox2.Items.Clear();
 
-            var kelimeArama = gs.KelimeAra(textBox1.Text);
+            var kelimeArama = gs.KelimeAra(textBox1.Text);//english
 
             string[] words = kelimeArama.Item1.ToArray();
             string[] kelimeler = kelimeArama.Item2.ToArray();
@@ -60,6 +60,19 @@ namespace kelimeciniz
         {
              gs.VeriEkle(textBox1.Text, textBox2.Text);
             MessageBox.Show("Ekleme başarılı.");
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            textBox2.Text = gs.KelimeAra(textBox1.Text, true);
+
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            Tuple<string,string> veri = gs.RastgeleKelimeGetirVTOrMyList(true);
+            listBox1.Items.Add(veri.Item1);
+            listBox2.Items.Add(veri.Item2);
         }
     }
     
