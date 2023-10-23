@@ -11,6 +11,8 @@ using Google.Cloud.Translation.V2;
 using static System.Net.Mime.MediaTypeNames;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
+using System.Net;
 
 namespace kelimeciniz
 {
@@ -92,6 +94,8 @@ namespace kelimeciniz
             List<string> sonucA = new List<string>();
             List<string> sonucB = new List<string>();
 
+            bool kelimeBulundu = false; // Kelimenin bulunup bulunmadığını kontrol etmek için bir bayrak
+
             if (columnWordData != null && columnWordData.Count > 0)
             {
                 for (int i = 0; i < columnWordData.Count; i++)
@@ -105,15 +109,17 @@ namespace kelimeciniz
                             {
                                 sonucA.Add(columnWordData[i][j].ToString());
                                 sonucB.Add(columnKelimeVeri[i][j].ToString());
+                                kelimeBulundu = true; // Kelimeyi bulduk, bayrağı true yap
                             }
                         }
                     }
                 }
             }
-            else
+
+            if (!kelimeBulundu)
             {
-                sonucA.Add(kelimeDuzelt(AranacakWord));
-                sonucB.Add(EnglishToTurkish(AranacakWord).ToString());
+                sonucA.Add(KelimeDuzelt(AranacakWord));
+                sonucB.Add(EnglishToTurkish(AranacakWord).ToString()); // EnglishToTurkish metodunu await ile bekletin
             }
 
             var uniqueSonucA = new HashSet<string>(sonucA);
@@ -122,7 +128,9 @@ namespace kelimeciniz
             return new Tuple<List<string>, List<string>>(uniqueSonucA.ToList(), uniqueSonucB.ToList());
         }
 
-        private string kelimeDuzelt(string kelime)
+
+
+        private string KelimeDuzelt(string kelime)
         {
             string sonuc = char.ToUpper(kelime[0]) + kelime.Substring(1).ToLower();
             return sonuc;
@@ -130,20 +138,27 @@ namespace kelimeciniz
 
         public void VeriEkle(string word, string kelime)
         {
-            string[] words = KelimeAra(word).Item1.ToArray();
-            string[] kelimeler = KelimeAra(word).Item2.ToArray();
+            // KelimeAra metodunu asenkron olarak çağırın
+            var kelimeAraResult =  KelimeAra(word);
+
+            string[] words = kelimeAraResult.Item1.ToArray();
+            string[] kelimeler = kelimeAraResult.Item2.ToArray();
 
             for (int i = 0; i < words.Length; i++)
+            {
                 if (word.ToLower() == words[i].ToLower())
-                    kelime = kelimeDuzelt(kelimeler[i]);//kelimeyi eklerken ilk harfini büyük diğer harfleri küçük şekilde ekliyor.
+                {
+                    kelime = KelimeDuzelt(kelimeler[i]);
+                }
                 else
                 {
-                   kelime= EnglishToTurkish(word).ToString();
+                    kelime = EnglishToTurkish(word).ToString(); // EnglishToTurkish metodunu asenkron olarak çağırın
                 }
+            }
             // Veriyi eklemek için gereken parametreleri oluştur
             body = new ValueRange
             {
-                Values = new List<IList<object>> { new List<object> { word, kelime } }
+                Values = new List<IList<object>> { new List<object> { KelimeDuzelt(word), KelimeDuzelt(kelime) } }
             };
 
             verireq = service.Spreadsheets.Values.Append(body, spreadsheetId, range);//Veri ekleme
@@ -197,18 +212,18 @@ namespace kelimeciniz
             return veri;
         }
 
-        static async Task<string> EnglishToTurkish(string text)
+
+        private string EnglishToTurkish(string text)
         {
             using (HttpClient client = new HttpClient())
             {
-                string apiUrl = $"https://mymemory.translated.net/api/get?q={text}&langpair=en|tr&key={myMemoryApiKey}";
-                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                string apiUrl = $"https://api.mymemory.translated.net/get?q={text}&langpair=en|tr";
+                HttpResponseMessage response = client.GetAsync(apiUrl).Result; // Bekleyerek sonucu al
 
                 if (response.IsSuccessStatusCode)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    // JSON ayrıştırma ile "translatedText" alanını elde edebilirsiniz.
-                    dynamic json = Newtonsoft.Json.JsonConvert.DeserializeObject(responseBody);
+                    string responseBody = response.Content.ReadAsStringAsync().Result; // Bekleyerek içeriği al
+                    dynamic json = JObject.Parse(responseBody);
                     string translatedText = json.responseData.translatedText;
 
                     return translatedText;
@@ -219,6 +234,7 @@ namespace kelimeciniz
                 }
             }
         }
+
 
     }
 }
