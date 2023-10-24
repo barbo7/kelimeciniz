@@ -18,6 +18,7 @@ namespace kelimeciniz
 {
     internal class GoogleSheets
     {
+        private Random rn = new Random(); // Bir methodda bunu tanımlayıp methodu üst üste çağırdığım zaman aynı değer geliyordu. daha geniş bir kapsamda tanımlayınca her türlü farklı cevap vermesi sağlanabiliyormuş.
         private static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
         private static UserCredential credential;
         private SheetsService service;
@@ -27,22 +28,32 @@ namespace kelimeciniz
         ValueRange responseSutunB;
         ValueRange responseSearchWord;
         ValueRange responseAramaKelime;
-
+        ValueRange responseCumle;
+        ValueRange responseCumleWord;
+        ValueRange responseCumleKelime;
 
         IList<IList<object>> sutunAVeri;
         IList<IList<object>> sutunBVeri;
         IList<IList<object>> columnWordData;
         IList<IList<object>> columnKelimeVeri;
+        IList<IList<object>> cumleliSayfaCumle;
+        IList<IList<object>> cumleliSayfaWord;
+        IList<IList<object>> cumleliSayfaKelime;
+
 
         string spreadsheetId = "1kafz2KAuvxqSdGbfNOou1S5keIf5wQDIDRLsdm9t6l8"; // excel tablosunun id'si
         string sutun1 = "Sayfa1!A:A"; //hangi satırı yazmak istediğim.
         string sutun2 = "Sayfa1!B:B"; //hangi satırı yazmak istediğim.
-        string VeriKumesiIng = "Veriler!A:A";
-        string VeriKumesiTr = "Veriler!B:B";
+        string veriKumesiIng = "Veriler!A:A";
+        string veriKumesiTr = "Veriler!B:B";
+        string cumlelerCumle = "Cumleler!A:A";
+        string cumlelerWord = "Cumleler!B:B";
+        string cumlelerKelime = "Cumleler!C:C";
+
+        string range = "Sayfa1!A:B"; //verieklemeSatırı
 
         SpreadsheetsResource.ValuesResource.AppendRequest verireq;
         ValueRange body;
-        string range = "Sayfa1!A:B"; //verieklemeSatırı
 
         static string myMemoryApiKey = "1fb0d0fab1c449d5df11";
 
@@ -69,25 +80,42 @@ namespace kelimeciniz
            //Api'ye istek atıyorum
             SpreadsheetsResource.ValuesResource.GetRequest request1 =
                service.Spreadsheets.Values.Get(spreadsheetId, sutun1);
-
             SpreadsheetsResource.ValuesResource.GetRequest request2 =
                service.Spreadsheets.Values.Get(spreadsheetId, sutun2);
 
             SpreadsheetsResource.ValuesResource.GetRequest reqSearch =
-              service.Spreadsheets.Values.Get(spreadsheetId, VeriKumesiIng);
+              service.Spreadsheets.Values.Get(spreadsheetId, veriKumesiIng);
             SpreadsheetsResource.ValuesResource.GetRequest reqArama =
-              service.Spreadsheets.Values.Get(spreadsheetId, VeriKumesiTr);
+              service.Spreadsheets.Values.Get(spreadsheetId, veriKumesiTr);
+
+            SpreadsheetsResource.ValuesResource.GetRequest reqCumleC =
+              service.Spreadsheets.Values.Get(spreadsheetId, cumlelerCumle);
+            SpreadsheetsResource.ValuesResource.GetRequest reqCumleW =
+             service.Spreadsheets.Values.Get(spreadsheetId, cumlelerWord);
+            SpreadsheetsResource.ValuesResource.GetRequest reqCumleK =
+             service.Spreadsheets.Values.Get(spreadsheetId, cumlelerKelime);
+
 
             responseSutunA = request1.Execute();
             responseSutunB = request2.Execute();
+
             responseSearchWord = reqSearch.Execute();
             responseAramaKelime = reqArama.Execute();
+
+            responseCumle = reqCumleC.Execute();
+            responseCumleWord = reqCumleW.Execute();
+            responseCumleKelime = reqCumleK.Execute();
 
             //değerleri listelere çekiyorum.
             sutunAVeri = responseSutunA.Values;
             sutunBVeri = responseSutunB.Values;
+
             columnWordData = responseSearchWord.Values;
             columnKelimeVeri = responseAramaKelime.Values;
+
+            cumleliSayfaCumle = responseCumle.Values;
+            cumleliSayfaWord= responseCumleWord.Values;
+            cumleliSayfaKelime = responseCumleKelime.Values;
         }
 
         public Tuple<List<string>, List<string>> KelimeAra(string AranacakWord)
@@ -129,6 +157,7 @@ namespace kelimeciniz
 
             return new Tuple<List<string>, List<string>>(uniqueSonucA.ToList(), uniqueSonucB.ToList());
         }
+
         /// <summary>
         /// Bu overloading methodu direkt olarak ingilizceden türkçeye arama yapmamız için oluşturduğum bir kod.
         /// tr adlı değişken true olursa devreye girer.
@@ -142,6 +171,21 @@ namespace kelimeciniz
 
             return result; 
         }
+
+        public Tuple<string,string,string> RastgeleCumle()
+        {
+            int sonSatir = cumleliSayfaCumle.Count();
+            Random rn = new Random();
+            int hangiSayi = rn.Next(0, sonSatir);
+
+            string cumle = cumleliSayfaCumle[hangiSayi][0].ToString();
+            string word = cumleliSayfaWord[hangiSayi][0].ToString();
+            string kelime = cumleliSayfaKelime[hangiSayi][0].ToString();
+
+            return Tuple.Create(cumle, word, kelime);
+        }
+
+
         /// <summary>
         /// Rastgele kelime ve anlamını çekmek için oluşturduğum method. Sözlükten veri çekilmesini istiyorsanız değişken true olmalı. Veri ekleyerek oluşturduğumuz listeden veri çekmek için false olması gerekiyor.
         /// </summary>
@@ -153,7 +197,6 @@ namespace kelimeciniz
             int sonsatirMyList = sutunAVeri.Count();
             int sonsatirVT = columnKelimeVeri.Count();
 
-            Random rn = new Random();
             int hangiSatirMyList = rn.Next(0, sonsatirMyList);//veri sayısına göre rastgele bir satırdan veri çekmeyi istiyorum.
             int hangiSatirVT = rn.Next(0, sonsatirVT);
 
@@ -161,13 +204,6 @@ namespace kelimeciniz
             string word = VeritabaniMi ? columnWordData[hangiSatirVT][0].ToString() : sutunBVeri[hangiSatirMyList][0].ToString();//aynı mantıkla kelimenin anlamını çekiyorum.
 
             return Tuple.Create(KelimeDuzelt(kelime), KelimeDuzelt(word));//verileri Tuple nesnesine çevirip gönderiyorum.
-        }
-
-
-        private string KelimeDuzelt(string kelime)//Sayfama veri eklerken bu formatta eklensin istiyorum.
-        {
-            string sonuc = char.ToUpper(kelime[0]) + kelime.Substring(1).ToLower();
-            return sonuc;
         }
 
         public void VeriEkle(string word, string kelime)
@@ -246,7 +282,6 @@ namespace kelimeciniz
             return veri;
         }
 
-
         private string Ceviri(string text,bool tr)
         {
             using (HttpClient client = new HttpClient())
@@ -270,7 +305,10 @@ namespace kelimeciniz
                 }
             }
         }
-
-
+        private string KelimeDuzelt(string kelime)//Sayfama veri eklerken bu formatta eklensin istiyorum.
+        {
+            string sonuc = char.ToUpper(kelime[0]) + kelime.Substring(1).ToLower();
+            return sonuc;
+        }
     }
 }

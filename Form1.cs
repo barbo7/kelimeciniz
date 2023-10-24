@@ -74,6 +74,25 @@ namespace kelimeciniz
             listBox1.Items.Add(veri.Item1);
             listBox2.Items.Add(veri.Item2);
         }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            listBox1.Items.Clear();
+            listBox2.Items.Clear();
+            listBox3.Items.Clear();
+
+
+            Tuple<string, string, string> vericik = gs.RastgeleCumle();
+            listBox1.Items.Add(vericik.Item1);
+            listBox2.Items.Add(vericik.Item2);
+            listBox3.Items.Add(vericik.Item3);
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            KelimeTahmin kt = new KelimeTahmin();
+            kt.Show();
+        }
     }
     
 }
