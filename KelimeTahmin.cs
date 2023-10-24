@@ -23,7 +23,12 @@ namespace kelimeciniz
 
         GoogleSheets gs = new GoogleSheets();
         int randomIndex;
-
+        int yanlis = 0;
+        int dogru = 0;
+        int soruS = 0;
+        string yaziyanlis = "Yanlış Sayısı = ";
+        string yazidogru = "Doğru Sayısı = ";
+        string soru = "Soru "; 
 
         public KelimeTahmin()
         {
@@ -47,8 +52,17 @@ namespace kelimeciniz
                 radioButtons[randomIndex].BackColor = System.Drawing.Color.Green;//doğru olan cevabı yeşil işaretliyorum.
 
                 if(rb != radioButtons[randomIndex])
+                {
                     rb.BackColor = System.Drawing.Color.Red;//eğer doğru cevap değil ise kırmızı renkte olsun işaretlediğim.
-
+                    yanlis++;
+                    label4.Text = yaziyanlis + yanlis;
+                }
+                else
+                {
+                    dogru++;
+                    label3.Text = yazidogru + dogru;
+                }
+                label6.Text = "Doğruluk oranı = %" + (dogru * 100 / (dogru+yanlis)).ToString();
                 synthesizer.Speak(label1.Text + " " + radioButtons[randomIndex].Text);
                
 
@@ -75,7 +89,10 @@ namespace kelimeciniz
         private void sirala()
         {
             Tuple<string, string> dogruCevap = gs.RastgeleKelimeGetirVTOrMyList(true);
+
+            soruS++;
             label1.Text = dogruCevap.Item2;
+            label5.Text = soru + soruS;
 
             // Rastgele bir RadioButton seçin
             randomIndex = random.Next(0, radioButtons.Length); // 0 ile (RadioButton dizisinin uzunluğu - 1) arasında rastgele bir indeks seçin
@@ -96,8 +113,12 @@ namespace kelimeciniz
         private void KelimeTahmin_Load(object sender, EventArgs e)
         {
             sirala();
+            label3.Text = yazidogru + dogru;
+            label4.Text = yaziyanlis + yanlis;
             Thread.Sleep(3200);
             synthesizer.Speak(label1.Text);
+           
+
         }
 
         private async void button1_Click(object sender, EventArgs e)
