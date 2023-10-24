@@ -11,6 +11,7 @@ using Google.Apis.Drive.v3;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
+using System.Speech.Synthesis;
 
 namespace kelimeciniz
 {

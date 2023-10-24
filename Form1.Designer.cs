@@ -57,7 +57,7 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.Location = new System.Drawing.Point(12, 110);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(393, 43);
+            this.listBox1.Size = new System.Drawing.Size(495, 43);
             this.listBox1.TabIndex = 1;
             // 
             // listBox2
@@ -114,7 +114,7 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(362, 181);
+            this.button6.Location = new System.Drawing.Point(319, 181);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(145, 34);
             this.button6.TabIndex = 9;
@@ -132,7 +132,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(362, 230);
+            this.button5.Location = new System.Drawing.Point(319, 230);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(145, 34);
             this.button5.TabIndex = 11;
@@ -142,11 +142,11 @@
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(475, 12);
+            this.button7.Location = new System.Drawing.Point(435, 12);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(75, 23);
+            this.button7.Size = new System.Drawing.Size(115, 23);
             this.button7.TabIndex = 12;
-            this.button7.Text = "button7";
+            this.button7.Text = "Kelime Tahmin";
             this.button7.UseVisualStyleBackColor = true;
             this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
