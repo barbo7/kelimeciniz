@@ -117,15 +117,12 @@ namespace kelimeciniz
             label4.Text = yaziyanlis + yanlis;
             Thread.Sleep(3200);
             synthesizer.Speak(label1.Text);
-           
-
         }
 
         private async void button1_Click(object sender, EventArgs e)
         {
             await Task.Delay(1000); // 1 saniye bekleme
             synthesizer.Speak(label1.Text);
-
         }
     }
 }
