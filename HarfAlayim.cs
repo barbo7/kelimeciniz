@@ -131,9 +131,6 @@ namespace kelimeciniz
             Button butonIslem = (Button)sender;
             harf = Convert.ToChar(butonIslem.Text);
 
-            sonTıklananButton = butonIslem.Name;
-            buttonLocation = butonIslem.Location;
-
             this.Controls.Remove(butonIslem); // Button'u formdan kaldır
             buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
             if (buttonLeft > 10)
