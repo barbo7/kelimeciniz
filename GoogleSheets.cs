@@ -57,8 +57,6 @@ namespace kelimeciniz
 
         static string myMemoryApiKey = "1fb0d0fab1c449d5df11";
 
-
-
         public GoogleSheets()//Class çağırıldığında çalışmasını istediğim constructor(Bazı verileri çekip ön belleğe almak için.)
         {
             using (var stream = new FileStream("C:\\Users\\as\\source\\repos\\kelimeciniz\\client_secret_950495088287-0n98o9v2m357pvrif86ffbhspb73dg0d.apps.googleusercontent.com.json", FileMode.Open, FileAccess.Read))
