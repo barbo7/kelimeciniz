@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -9,15 +10,15 @@ namespace kelimeciniz
     public partial class HarfAlayim : Form
     {
         GoogleSheets gs = new GoogleSheets();
-        List<System.Windows.Forms.Button> buttonList = new List<System.Windows.Forms.Button>();
-        List<System.Windows.Forms.Button> buttonTahminList = new List<System.Windows.Forms.Button>();
+        List<Button> buttonList = new List<Button>();
+        List<Button> buttonTahminList = new List<Button>();
         List<EklenenButtonBilgi> butonBilgi = new List<EklenenButtonBilgi>();
-        Random rn = new Random();
-        //string sonTıklananButton = "";
-        //Point buttonLocation;
-        //Tuple<List<Button>, Point[]>;
-        
+        List<EklenenButtonBilgi> butonTahminBilgi = new List<EklenenButtonBilgi>();
+        List<int> kelimeninHarflerininIndexi = new List<int>();
 
+
+        Random rn = new Random();
+     
         string kelime = default; // Harf yerleştirilecek kelimeyi burada tanımlayın
         int buttonLeft = 10; // İlk butonun sola olan uzaklığı
         int yenibuttonLeft = 10;
@@ -64,7 +65,6 @@ namespace kelimeciniz
                 yenibuttonLeft = left;
             else buttonLeft = left;
         }
-
         private void OlusturVeDuzenleButonlar()
         {
         again:
@@ -78,16 +78,25 @@ namespace kelimeciniz
             string karisikkelime = KelimeKaristir(kelime);
             label1.Text = veri.Item1;
 
+            char[] kelimeDizi = kelime.ToCharArray();
 
             for (int i = 0; i < karisikkelime.Length; i++)
             {
+
+               char a= kelimeDizi[kelimeninHarflerininIndexi[i]];
+
                 Button button = new Button();
                 button.Text = karisikkelime[i].ToString();
-                button.Name = "Text" + (karisikkelime.Length - i).ToString();
+                button.Name = "Text" + (i).ToString();
                 ButtonSira(button, i, false);//Bu fonksiyonu kelimeleri düzenli bir sırada eklemek için oluşturdum.
 
                 buttonList.Add(button);
                 this.Controls.Add(button); // Butonu forma ekleyin
+
+                Button tahminButtonu = new Button();
+                tahminButtonu.Text = kelime[kelimeninHarflerininIndexi[i]].ToString();
+                tahminButtonu.Name ="";
+
 
                 butonBilgi.Add(new EklenenButtonBilgi
                 {
@@ -171,23 +180,28 @@ namespace kelimeciniz
             else tahminButtonSayisi = 0;
             this.Controls.Add(newButton);
         }
+
         public string KelimeKaristir(string word)
         {
             char[] harfler = word.ToCharArray();
+            int[] kelimeninHarflerininIndexiDizi = new int[word.Length];
             
             for(int i=word.Length-1;i>0;i--)
             {
                 int hangiHarf = rn.Next(i + 1);
                 char harf = harfler[i];
                 harfler[i] = harfler[hangiHarf];
+                kelimeninHarflerininIndexiDizi[i] = harfler[hangiHarf];
                 harfler[hangiHarf] = harf;
             }
-            
+
+            kelimeninHarflerininIndexi.AddRange(kelimeninHarflerininIndexiDizi.Reverse());
 
             return new string(harfler);
         }
         void YeniKelimeGetir()
         {
+            kelimeninHarflerininIndexi.Clear();
             tahminButtonSayisi = 0;
             buttonLeft = 10;
             yenibuttonLeft = 10;
