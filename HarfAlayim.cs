@@ -24,10 +24,12 @@ namespace kelimeciniz
         int yenibuttonLeft = 10;
         int left = 10;
         int tahminButtonSayisi = 0;
+        int dogruTahmin = 0;
         public HarfAlayim()
         {
             InitializeComponent();
             OlusturVeDuzenleButonlar();
+            button2.Text = "Harf alimm";
 
         }
         /// <summary>
@@ -95,15 +97,22 @@ namespace kelimeciniz
 
                 Button tahminButtonu = new Button();
                 tahminButtonu.Text = kelime[kelimeninHarflerininIndexi[i]].ToString();
-                tahminButtonu.Name ="";
+                tahminButtonu.Name = "Text" + (i).ToString();
 
+                ButtonSira(tahminButtonu, i, true);
+                butonTahminBilgi.Add(new EklenenButtonBilgi
+                {
+                    ButtonId = "Text" + (i).ToString(),
+                    Konum = tahminButtonu.Location
+                }) ;
+                yenibuttonLeft = 10;
 
                 butonBilgi.Add(new EklenenButtonBilgi
                 {
                     ButtonId = button.Name,
                     Konum = button.Location
                 });
-            }
+            }           
 
             foreach (Button buton in buttonList)
             {
@@ -146,6 +155,9 @@ namespace kelimeciniz
             this.Controls.Add(butonGeri);
         }
 
+        private void DogruTahminMi()
+        {
+        }
       
         private void Button_Click(object sender, EventArgs e)
         {
@@ -172,6 +184,14 @@ namespace kelimeciniz
 
 
             ButtonSira(newButton, tahminButtonSayisi, true);//Bu fonksiyonu kelimeleri düzenli bir sırada eklemek için oluşturdum.
+
+            string dogruName = butonTahminBilgi[dogruTahmin].ButtonId;
+            Point dogruKonum = butonTahminBilgi[dogruTahmin].Konum;
+            if (newButton.Name == dogruName && newButton.Location==dogruKonum)
+            {
+                dogruTahmin++;
+                newButton.Enabled = false;
+            }
             buttonTahminList.Add(newButton);
             newButton.Click += TahminButtonGeriCek_Click;
 
@@ -185,22 +205,31 @@ namespace kelimeciniz
         {
             char[] harfler = word.ToCharArray();
             int[] kelimeninHarflerininIndexiDizi = new int[word.Length];
-            
-            for(int i=word.Length-1;i>0;i--)
+
+            for (int i=word.Length-1;i>0;i--)
             {
-                int hangiHarf = rn.Next(i + 1);
-                char harf = harfler[i];
-                harfler[i] = harfler[hangiHarf];
-                kelimeninHarflerininIndexiDizi[i] = harfler[hangiHarf];
-                harfler[hangiHarf] = harf;
+                int hangiHarf = rn.Next(i + 1);//rastgele index üretilir.
+                char harf = harfler[i];//harfe indeks numarasına göre harf gönderilir.
+
+                harfler[i] = harfler[hangiHarf];//kelimenin sıradaki indeksine rastgele bir indeksteki veri gönderilir.
+                harfler[hangiHarf] = harf;//rastgele indeksteki  veriye de sıradaki verinin indeksindeki veri girilir.
+
+
+                int gecici = kelimeninHarflerininIndexiDizi[i];
+                kelimeninHarflerininIndexiDizi[i] = kelimeninHarflerininIndexiDizi[hangiHarf];
+                kelimeninHarflerininIndexiDizi[hangiHarf] = gecici;
+
+                //kelimeninHarflerininIndexiDizi[i] = ???;
             }
 
-            kelimeninHarflerininIndexi.AddRange(kelimeninHarflerininIndexiDizi.Reverse());
+            kelimeninHarflerininIndexi.AddRange(kelimeninHarflerininIndexiDizi);
+            //kelimeninHarflerininIndexi.AddRange(kelimeninHarflerininIndexiDizi.Reverse());
 
             return new string(harfler);
         }
         void YeniKelimeGetir()
         {
+            dogruTahmin = 0;
             kelimeninHarflerininIndexi.Clear();
             tahminButtonSayisi = 0;
             buttonLeft = 10;
@@ -219,6 +248,11 @@ namespace kelimeciniz
         private void button1_Click(object sender, EventArgs e)
         {
             YeniKelimeGetir();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+
         }
     }
     public class EklenenButtonBilgi
