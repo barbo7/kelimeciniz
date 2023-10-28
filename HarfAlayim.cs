@@ -191,6 +191,7 @@ namespace kelimeciniz
             {
                 dogruTahmin++;
                 newButton.Enabled = false;
+                MessageBox.Show("aha");
             }
             buttonTahminList.Add(newButton);
             newButton.Click += TahminButtonGeriCek_Click;
@@ -205,6 +206,11 @@ namespace kelimeciniz
         {
             char[] harfler = word.ToCharArray();
             int[] kelimeninHarflerininIndexiDizi = new int[word.Length];
+
+            for (int i = 0; i < word.Length; i++)
+            {
+                kelimeninHarflerininIndexiDizi[i] = i;
+            }
 
             for (int i=word.Length-1;i>0;i--)
             {
