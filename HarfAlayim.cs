@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace kelimeciniz
@@ -14,10 +16,12 @@ namespace kelimeciniz
         List<Button> buttonTahminList = new List<Button>();
         List<EklenenButtonBilgi> butonBilgi = new List<EklenenButtonBilgi>();
         List<EklenenButtonBilgi> butonTahminBilgi = new List<EklenenButtonBilgi>();
-
+        Dictionary<string, string> birOncekiKelime = new Dictionary<string, string>();
+        
         Random rn = new Random();
      
         string kelime = default; // Harf yerleştirilecek kelimeyi burada tanımlayın
+        string birOncekiKelimeKey = "";
         int buttonLeft = 10; // İlk butonun sola olan uzaklığı
         int yenibuttonLeft = 10;
         int left = 10;
@@ -76,6 +80,8 @@ namespace kelimeciniz
                 goto again;
             }
             string karisikkelime = KelimeKaristir(kelime);
+
+            birOncekiKelime.Add(kelime, veri.Item1);//Türkçe-İngilizce
             label1.Text = veri.Item1;
 
             char[] kelimeDizi = kelime.ToCharArray();
@@ -98,19 +104,22 @@ namespace kelimeciniz
                 {
                     Konum = tahminButtonu.Location
                 }) ;
-                yenibuttonLeft = 10;
 
                 butonBilgi.Add(new EklenenButtonBilgi
                 {
                     ButtonId = button.Name,
                     Konum = button.Location
                 });
-            }           
+            }
+            yenibuttonLeft = 10;
 
             foreach (Button buton in buttonList)
             {
                 buton.Click += Button_Click;
             }
+
+            if (birOncekiKelimeKey != "") 
+                label2.Text = birOncekiKelime[birOncekiKelimeKey] +"\n"+ birOncekiKelimeKey;
         }
         private void TahminButtonGeriCek_Click(object sender, EventArgs e)
         {
@@ -148,8 +157,20 @@ namespace kelimeciniz
             this.Controls.Add(butonGeri);
         }
 
-        private void DogruTahminMi()
+        private async void DogruTahminMi(Button buton)
         {
+            if(buton.Text.ToLower()== kelime[dogruTahmin].ToString().ToLower() && buton.Location == butonTahminBilgi[dogruTahmin].Konum)
+            {
+                dogruTahmin++;
+                buton.Enabled = false;
+                if (dogruTahmin == kelime.Length)
+                {
+                    birOncekiKelimeKey = kelime;
+                    await Task.Delay(1500);
+                    YeniKelimeGetir();
+                }
+            }
+            
         }
       
         private void Button_Click(object sender, EventArgs e)
@@ -176,12 +197,8 @@ namespace kelimeciniz
             newButton.Name = butonIsim;
 
             ButtonSira(newButton, tahminButtonSayisi, true);//Bu fonksiyonu kelimeleri düzenli bir sırada eklemek için oluşturdum.
-            
-            if(newButton.Text.ToLower()== kelime[dogruTahmin].ToString().ToLower())
-            {
-                dogruTahmin++;
-                newButton.Enabled = false;
-            }
+
+            DogruTahminMi(newButton);//Koyulan harf doğru mu onu test ediyorum.
 
             buttonTahminList.Add(newButton);
             newButton.Click += TahminButtonGeriCek_Click;
@@ -234,7 +251,23 @@ namespace kelimeciniz
 
         private void button2_Click(object sender, EventArgs e)
         {
+            int suankiDogruTahmin = dogruTahmin;
+            for (int i = 0; i < buttonList.Count; i++)
+            {
+                DogruTahminMi(buttonList[i]);
+                if (dogruTahmin != suankiDogruTahmin)
+                {
+                    dogruTahmin--;
+                    buttonList[i].PerformClick();
+                    break;
+                }
+            }
+        }
 
+
+        private void HarfAlayim_Load(object sender, EventArgs e)
+        {
+            
         }
     }
     public class EklenenButtonBilgi
