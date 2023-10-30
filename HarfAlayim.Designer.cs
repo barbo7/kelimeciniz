@@ -86,7 +86,6 @@
             this.Controls.Add(this.label1);
             this.Name = "HarfAlayim";
             this.Text = "HarfAlayim";
-            this.Load += new System.EventHandler(this.HarfAlayim_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
