@@ -34,8 +34,7 @@ namespace kelimeciniz
         int left = 10;
         int tahminButtonSayisi = 0;
         int dogruTahmin = 0;
-
-        bool rastgele = false;
+        int buttonTiklamaSayisi = 1;
 
         public HarfAlayim()
         {
@@ -207,7 +206,7 @@ namespace kelimeciniz
                 {
                     EskiBilinenKelimeNeydi();
                 }
-            }
+            } 
         }
 
         private void Button_Click(object sender, EventArgs e)
@@ -219,11 +218,11 @@ namespace kelimeciniz
                 harf = Convert.ToChar(butonIslem.Text);
                 string butonIsim = butonIslem.Name;
 
-                if (bakilanButtonNameler.Contains(butonIsim))
-                    return;
-
                 this.Controls.Remove(butonIslem); // Button'u formdan kaldır
                 buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
+
+                if (bakilanButtonNameler.Contains(butonIsim))
+                    return;
 
                 if (buttonLeft > 10)
                     buttonLeft -= 40;
@@ -277,10 +276,13 @@ namespace kelimeciniz
         {
             butonBilgi.Clear();
             butonTahminBilgi.Clear();
+            bakilanButtonNameler.Clear();
             dogruTahmin = 0;
             tahminButtonSayisi = 0;
             buttonLeft = 10;
             yenibuttonLeft = 10;
+            buttonTiklamaSayisi = 0;
+            
             foreach (Button buton in buttonList)
             {
                 this.Controls.Remove(buton);
@@ -291,14 +293,19 @@ namespace kelimeciniz
             }
 
             OlusturVeDuzenleButonlar();
+            button2.Enabled = true;
         }
         private void button1_Click(object sender, EventArgs e)
         {
             YeniKelimeGetir();
         }
 
-        private void button2_Click(object sender, EventArgs e)
+
+        private async void button2_Click(object sender, EventArgs e)
         {
+            // Butonu devre dışı bırak
+            button2.Enabled = false;
+
             int suankiDogruTahmin = dogruTahmin;
             for (int i = 0; i < buttonList.Count; i++)
             {
@@ -310,7 +317,11 @@ namespace kelimeciniz
                     break;
                 }
             }
+
+            // İşlem tamamlandığında butonu etkinleştir
+            button2.Enabled = true;
         }
+
     }
     public class EklenenButtonBilgi
     {
