@@ -248,7 +248,7 @@ namespace kelimeciniz
                 buttonTahminList.Add(newButton);
                 newButton.Click += TahminButtonGeriCek_Click;
 
-                if (kelime.Length > tahminButtonSayisi)
+                if (kelime.Length >= tahminButtonSayisi)
                     tahminButtonSayisi++;
                 else tahminButtonSayisi = 0;
                 this.Controls.Add(newButton);
@@ -301,7 +301,7 @@ namespace kelimeciniz
         }
 
 
-        private async void button2_Click(object sender, EventArgs e)
+        private void button2_Click(object sender, EventArgs e)
         {
             // Butonu devre dışı bırak
             button2.Enabled = false;
@@ -320,6 +320,8 @@ namespace kelimeciniz
 
             // İşlem tamamlandığında butonu etkinleştir
             button2.Enabled = true;
+            if (buttonTiklamaSayisi++ >= 3)// Bu değeri her kelimede sıfırlamak yerine toplam 4 hakla sınırlayıp hak verebilrim bir de tahmin buttonları maks 6 kadar yanlış yerleştirmee izin vereblr. 
+                button2.Enabled = false;
         }
 
     }
