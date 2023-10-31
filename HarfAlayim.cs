@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,36 +12,44 @@ namespace kelimeciniz
 {
     public partial class HarfAlayim : Form
     {
-        GoogleSheets gs = new GoogleSheets();
-        List<Button> buttonList = new List<Button>();
-        List<Button> buttonTahminList = new List<Button>();
-        List<EklenenButtonBilgi> butonBilgi = new List<EklenenButtonBilgi>();
-        List<EklenenButtonBilgi> butonTahminBilgi = new List<EklenenButtonBilgi>();
-        Dictionary<string, string> birOncekiKelime = new Dictionary<string, string>();
-        
+        GoogleSheets gs = new GoogleSheets(); //Api ile veri çektiğim class
+        List<Button> buttonList = new List<Button>(); //Harfleri oluşturup not ettiğim harfler
+        List<Button> buttonTahminList = new List<Button>(); //Tahminleri ekleyip tuttuğum harfler
+        List<EklenenButtonBilgi> butonBilgi = new List<EklenenButtonBilgi>(); //Harflerin bilgilerini tuttuğum yer
+        List<EklenenButtonBilgi> butonTahminBilgi = new List<EklenenButtonBilgi>(); //Buttonların gitmesi gereken yerleri not aldığım liste
+
+        Dictionary<string, string> birOncekiKelime = new Dictionary<string, string>();//Bildiğimiz kelimeleri not almak için kullandığım dict.
+        List<string> bakilanButtonNameler = new List<string>();
+        int[] indexNereyeGitti; //Hangi button hangi indexe gitti bunu takip etmek için.
+
+        bool[] bakilanIndexler; //Hangi harfler tahmin edildi takip etmek için.
+
         Random rn = new Random();
      
         string kelime = default; // Harf yerleştirilecek kelimeyi burada tanımlayın
         string birOncekiKelimeKey = "";
+
         int buttonLeft = 10; // İlk butonun sola olan uzaklığı
         int yenibuttonLeft = 10;
         int left = 10;
         int tahminButtonSayisi = 0;
         int dogruTahmin = 0;
+
+        bool rastgele = false;
+
         public HarfAlayim()
         {
             InitializeComponent();
             OlusturVeDuzenleButonlar();
-            button2.Text = "Harf alimm";
-
         }
+
         /// <summary>
         /// Button'u alıyorum ve sırayla eklemek için kullanıyorun. eğer tahmin mi özelliği aktif olursa tahmin edilen harfler yerine aktarılıyor false ise tam tersi.
         /// </summary>
         /// <param name="button"></param>
         /// <param name="siraNo"></param>
         /// <param name="tahminMi"></param>
-        private void ButtonSira(Button button, int siraNo, bool tahminMi)
+        private void ButtonSira(Button button, int siraNo, bool tahminMi)//Hangi button hangi satır-sütun a gidilmesi gerek onu bulmamı ve eklememi sağlayan method.
         {
             button.Height = 30;
             button.Width = 30;
@@ -69,7 +78,8 @@ namespace kelimeciniz
                 yenibuttonLeft = left;
             else buttonLeft = left;
         }
-        private void OlusturVeDuzenleButonlar()
+
+        private void OlusturVeDuzenleButonlar()//Keklimeynin harflerini bölmek ve bilgileir eklemek için kullandığım method.
         {
         again:
             Tuple<string, string> veri = gs.RastgeleKelimeGetirVTOrMyList(true);
@@ -79,12 +89,17 @@ namespace kelimeciniz
                 buttonLeft = 10;
                 goto again;
             }
+
+            indexNereyeGitti = new int[kelime.Length];
+            for (int i = 0; i < kelime.Length; i++)
+                indexNereyeGitti[i] = i;
+
             string karisikkelime = KelimeKaristir(kelime);
 
             birOncekiKelime.Add(kelime, veri.Item1);//Türkçe-İngilizce
             label1.Text = veri.Item1;
 
-            char[] kelimeDizi = kelime.ToCharArray();
+            bakilanIndexler = new bool[kelime.Length];
 
             for (int i = 0; i < karisikkelime.Length; i++)
             {
@@ -100,10 +115,16 @@ namespace kelimeciniz
                 tahminButtonu.Text = kelime[i].ToString();
 
                 ButtonSira(tahminButtonu, i, true);
+
+                string amk = "Text" + indexNereyeGitti[i];
+
                 butonTahminBilgi.Add(new EklenenButtonBilgi
                 {
-                    Konum = tahminButtonu.Location
-                }) ;
+                    Konum = tahminButtonu.Location,
+                    ButtonId = "Text" + indexNereyeGitti[i]
+
+                    //buttonId değerini de alırsam güzel olabilir.
+                });
 
                 butonBilgi.Add(new EklenenButtonBilgi
                 {
@@ -118,11 +139,12 @@ namespace kelimeciniz
                 buton.Click += Button_Click;
             }
 
-            if (birOncekiKelimeKey != "") 
-                label2.Text = birOncekiKelime[birOncekiKelimeKey] +"\n"+ birOncekiKelimeKey;
+            if (birOncekiKelimeKey != "")
+                label2.Text = birOncekiKelime[birOncekiKelimeKey] + "\n" + birOncekiKelimeKey;
         }
-        private void TahminButtonGeriCek_Click(object sender, EventArgs e)
+        private void TahminButtonGeriCek_Click(object sender, EventArgs e)//Tahmin edilen buttonu eski yerine almak için.
         {
+            //int index = rastgele ? hangiSira : tahminButtonSayisi; //soldaki değeri bir method oluşturup rastgele bir indexin bilgilerini gönderecek şekilde deiştireceğim.
             Button IslemButtonGeri = (Button)sender;
             char geriAlinanHarf = Convert.ToChar(IslemButtonGeri.Text);
             this.Controls.Remove(IslemButtonGeri);
@@ -132,7 +154,10 @@ namespace kelimeciniz
             buttonTahminList.Remove(IslemButtonGeri);
             if (yenibuttonLeft > 10)
                 yenibuttonLeft -= 40;
-            else yenibuttonLeft = 10;
+            else
+                yenibuttonLeft = 10;
+            bakilanIndexler[tahminButtonSayisi] = false;
+
             tahminButtonSayisi--;
 
             if (buttonTahminList.Count < 1)
@@ -145,10 +170,13 @@ namespace kelimeciniz
             butonGeri.Width = 30;
             butonGeri.Height = 30;
             butonGeri.Text = geriAlinanHarf.ToString();
-            for(int i=0;i<butonBilgi.Count;i++)
+            for (int i = 0; i < butonBilgi.Count; i++)
             {
                 if (TiklananButton == butonBilgi[i].ButtonId)
+                {
                     butonGeri.Location = butonBilgi[i].Konum;
+                    bakilanIndexler[i] = false;
+                }
             }
             butonGeri.Name = TiklananButton;
 
@@ -157,75 +185,95 @@ namespace kelimeciniz
             this.Controls.Add(butonGeri);
         }
 
-        private async void DogruTahminMi(Button buton)
+        private async void EskiBilinenKelimeNeydi() //Kelimeyi doğru tahmin edince 1.5 saniye sonrasında yeni kelime geliyor.
         {
-            if(buton.Text.ToLower()== kelime[dogruTahmin].ToString().ToLower() && buton.Location == butonTahminBilgi[dogruTahmin].Konum)
+            birOncekiKelimeKey = kelime;
+            await Task.Delay(1500);
+            YeniKelimeGetir();
+        }
+
+        private void DogruTahminMi(Button buton) //Harfin doğru sırada olup olmadığını öğrenmek için.
+        {
+            //int index = rastgele ? hangiSira : dogruTahmin;
+            if (buton.Text == kelime[dogruTahmin].ToString())
             {
-                dogruTahmin++;
-                buton.Enabled = false;
-                if (dogruTahmin == kelime.Length)
+                if (buton.Location == butonTahminBilgi[dogruTahmin].Konum)
                 {
-                    birOncekiKelimeKey = kelime;
-                    await Task.Delay(1500);
-                    YeniKelimeGetir();
+                    buton.Enabled = false;
+
+                }
+                dogruTahmin++;
+                if (dogruTahmin >= kelime.Length)
+                {
+                    EskiBilinenKelimeNeydi();
                 }
             }
-            
         }
-      
+
         private void Button_Click(object sender, EventArgs e)
         {
-            char harf = default;
-            Button butonIslem = (Button)sender;
-            harf = Convert.ToChar(butonIslem.Text);
-            string butonIsim = butonIslem.Name;
-
-            this.Controls.Remove(butonIslem); // Button'u formdan kaldır
-            buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
-            if (buttonLeft > 10)
-                buttonLeft -= 40;
-            else buttonLeft = 10;
-
-            if (buttonList.Count < 1)
+            if(!bakilanIndexler[tahminButtonSayisi])
             {
-                buttonLeft = 10;
-                tahminButtonSayisi = 0;
+                char harf = default;
+                Button butonIslem = (Button)sender;
+                harf = Convert.ToChar(butonIslem.Text);
+                string butonIsim = butonIslem.Name;
+
+                if (bakilanButtonNameler.Contains(butonIsim))
+                    return;
+
+                this.Controls.Remove(butonIslem); // Button'u formdan kaldır
+                buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
+
+                if (buttonLeft > 10)
+                    buttonLeft -= 40;
+                else buttonLeft = 10;
+
+                if (buttonList.Count < 1)
+                {
+                    buttonLeft = 10;
+                    tahminButtonSayisi = 0;
+                }
+
+                Button newButton = new Button();
+                newButton.Text = harf.ToString();
+                newButton.Name = butonIsim;
+            
+                bakilanButtonNameler.Add(butonIsim);
+                bakilanIndexler[tahminButtonSayisi] = true;
+
+                ButtonSira(newButton, tahminButtonSayisi, true);//Bu fonksiyonu kelimeleri düzenli bir sırada eklemek için oluşturdum.
+
+                DogruTahminMi(newButton);//Koyulan harf doğru mu onu test ediyorum.
+
+                buttonTahminList.Add(newButton);
+                newButton.Click += TahminButtonGeriCek_Click;
+
+                if (kelime.Length > tahminButtonSayisi)
+                    tahminButtonSayisi++;
+                else tahminButtonSayisi = 0;
+                this.Controls.Add(newButton);
             }
 
-            Button newButton = new Button();
-            newButton.Text = harf.ToString();
-            newButton.Name = butonIsim;
-
-            ButtonSira(newButton, tahminButtonSayisi, true);//Bu fonksiyonu kelimeleri düzenli bir sırada eklemek için oluşturdum.
-
-            DogruTahminMi(newButton);//Koyulan harf doğru mu onu test ediyorum.
-
-            buttonTahminList.Add(newButton);
-            newButton.Click += TahminButtonGeriCek_Click;
-
-            if (kelime.Length > tahminButtonSayisi)
-                tahminButtonSayisi++;
-            else tahminButtonSayisi = 0;
-            this.Controls.Add(newButton);
         }
 
-        public string KelimeKaristir(string word)
+        public string KelimeKaristir(string word)// Kelimenin harflerini bölüp karıştırdığım bölüm.
         {
             char[] harfler = word.ToCharArray();
-
-            for (int i=word.Length-1;i>0;i--)
+            for (int i = word.Length - 1; i > 0; i--)
             {
                 int hangiHarf = rn.Next(i + 1);//rastgele index üretilir.
                 char harf = harfler[i];//harfe indeks numarasına göre harf gönderilir.
+                indexNereyeGitti[i] = indexNereyeGitti[hangiHarf];
+                indexNereyeGitti[hangiHarf] = i;
 
                 harfler[i] = harfler[hangiHarf];//kelimenin sıradaki indeksine rastgele bir indeksteki veri gönderilir.
                 harfler[hangiHarf] = harf;//rastgele indeksteki  veriye de sıradaki verinin indeksindeki veri girilir.
             }
 
-
             return new string(harfler);
         }
-        void YeniKelimeGetir()
+        void YeniKelimeGetir() // Değişkenleri sıfırlayıp yeni kelimenin getirildiği method.
         {
             butonBilgi.Clear();
             butonTahminBilgi.Clear();
@@ -262,12 +310,6 @@ namespace kelimeciniz
                     break;
                 }
             }
-        }
-
-
-        private void HarfAlayim_Load(object sender, EventArgs e)
-        {
-            
         }
     }
     public class EklenenButtonBilgi
