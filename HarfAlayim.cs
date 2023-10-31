@@ -77,6 +77,35 @@ namespace kelimeciniz
                 yenibuttonLeft = left;
             else buttonLeft = left;
         }
+        private void ButtonSira(Button button,int sira)
+        {
+            button.Height = 30;
+            button.Width = 30;
+            int buttonTop = 180;
+            int left1 = 10;
+            sira= sira % 8; //Sırada sadece 8 harf olabileceği için.
+            for (int i = 0; i < sira; i++)
+            {
+                left1 += button.Width + 10;
+            }
+
+            if (sira < 8)
+            {
+                button.Top = buttonTop; // Butonun yatay konumunu ayarlayın
+                button.Left = left1;
+            }
+            else if (sira == 8)
+            {
+                button.Top = buttonTop + 30;
+                button.Left = 10;
+            }
+            else if (sira > 8 && sira <= 16)
+            {
+                button.Top = buttonTop + 30;
+                button.Left = left1;
+            }
+
+        }
         private void OlusturVeDuzenleButonlar()//Keklimeynin harflerini bölmek ve bilgileir eklemek için kullandığım method.
         {
         again:
@@ -143,8 +172,6 @@ namespace kelimeciniz
         private void TahminButtonGeriCek_Click(object sender, EventArgs e)//Tahmin edilen buttonu eski yerine almak için.
         {
             int index = rastgele ? hangiSira : tahminButtonSayisi; //soldaki değeri bir method oluşturup rastgele bir indexin bilgilerini gönderecek şekilde deiştireceğim.
-            bakilanIndexler[index] = false;//bu değer niye null gelebilir bakılacak.
-
             Button IslemButtonGeri = (Button)sender;
             char geriAlinanHarf = Convert.ToChar(IslemButtonGeri.Text);
             this.Controls.Remove(IslemButtonGeri);
@@ -154,15 +181,17 @@ namespace kelimeciniz
             buttonTahminList.Remove(IslemButtonGeri);
             if (yenibuttonLeft > 10)
                 yenibuttonLeft -= 40;
-            else yenibuttonLeft = 10;
-            tahminButtonSayisi--;
+            else 
+                yenibuttonLeft = 10;
+
+            if(!rastgele)
+                tahminButtonSayisi--;
 
             if (buttonTahminList.Count < 1)
             {
                 yenibuttonLeft = 10;
                 tahminButtonSayisi = 0;
             }
-
 
             Button butonGeri = new Button();
             butonGeri.Width = 30;
@@ -171,7 +200,10 @@ namespace kelimeciniz
             for(int i=0;i<butonBilgi.Count;i++)
             {
                 if (TiklananButton == butonBilgi[i].ButtonId)
+                {
                     butonGeri.Location = butonBilgi[i].Konum;
+                    bakilanIndexler[i] = false;
+                }
             }
             butonGeri.Name = TiklananButton;
 
@@ -190,9 +222,10 @@ namespace kelimeciniz
 
         private void DogruTahminMi(Button buton) //Harfin doğru sırada olup olmadığını öğrenmek için.
         {
-            if (buton.Text== kelime[dogruTahmin].ToString())
+            int index = rastgele ? hangiSira : dogruTahmin;
+            if (buton.Text== kelime[index].ToString())
             {
-                if(buton.Location == butonTahminBilgi[dogruTahmin].Konum)
+                if(buton.Location == butonTahminBilgi[index].Konum)
                 {
                     buton.Enabled = false;
 
@@ -210,46 +243,51 @@ namespace kelimeciniz
             if (!bakilanIndexler[index])//eğer indeksimize değer atanmadıysa çalışacak fonksiyon.
             {
                 char harf = default;
-            Button butonIslem = (Button)sender;
-            harf = Convert.ToChar(butonIslem.Text);
-            string butonIsim = butonIslem.Name;
+                Button butonIslem = (Button)sender;
+                harf = Convert.ToChar(butonIslem.Text);
+                string butonIsim = butonIslem.Name;
 
-            this.Controls.Remove(butonIslem); // Button'u formdan kaldır
+                this.Controls.Remove(butonIslem); // Button'u formdan kaldır
 
-            buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
+                buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
 
-            if (buttonLeft > 10)
-                buttonLeft -= 40;
-            else buttonLeft = 10;
+                if (buttonLeft > 10)
+                    buttonLeft -= 40;
+                else buttonLeft = 10;
 
-            if (buttonList.Count < 1)
-            {
-                buttonLeft = 10;
-                tahminButtonSayisi = 0;
-            }
+                if (buttonList.Count < 1)
+                {
+                    buttonLeft = 10;
+                    tahminButtonSayisi = 0;
+                }
 
-            Button newButton = new Button();
-            newButton.Text = harf.ToString();
-            newButton.Name = butonIsim;
+                Button newButton = new Button();
+                newButton.Text = harf.ToString();
+                newButton.Name = butonIsim;
 
+                bakilanIndexler[index] = true;
 
-            bakilanIndexler[index] = true;
+                if(rastgele)
+                {
+                    hangiSira = tahminButtonSayisi;
+                    ButtonSira(newButton, index);
+                }
+                else
+                    ButtonSira(newButton, index, true);
 
-            ButtonSira(newButton, index, true);
+                DogruTahminMi(newButton);
 
-            DogruTahminMi(newButton);
+                buttonTahminList.Add(newButton);
+                newButton.Click += TahminButtonGeriCek_Click;
 
-            buttonTahminList.Add(newButton);
-            newButton.Click += TahminButtonGeriCek_Click;
+                if (index == tahminButtonSayisi && kelime.Length > tahminButtonSayisi)
+                    tahminButtonSayisi++;
 
-            if (index == tahminButtonSayisi && kelime.Length > tahminButtonSayisi)
-                tahminButtonSayisi++;
+                else if (kelime.Length <= tahminButtonSayisi) 
+                    tahminButtonSayisi = 0;
 
-            else if (kelime.Length <= tahminButtonSayisi) 
-                tahminButtonSayisi = 0;
-
-            rastgele = false;
-            this.Controls.Add(newButton);
+                rastgele = false;
+                this.Controls.Add(newButton);
             }
         }
         
@@ -269,6 +307,7 @@ namespace kelimeciniz
                     if (id == buttonList[i].Name)
                     {
                         btn = buttonList[i];
+                        break;
                     }
                 }
                 hangiSira = rastgeleIndex;
