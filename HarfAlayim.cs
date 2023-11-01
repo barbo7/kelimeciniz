@@ -141,6 +141,14 @@ namespace kelimeciniz
             if (birOncekiKelimeKey != "")
                 label2.Text = birOncekiKelime[birOncekiKelimeKey] + "\n" + birOncekiKelimeKey;
         }
+        private int TahminiBS()
+        {
+            int kacTaneVar = 0;
+            foreach (var i in buttonTahminList)
+                kacTaneVar++;
+            return kacTaneVar;
+        }
+
         private void TahminButtonGeriCek_Click(object sender, EventArgs e)//Tahmin edilen buttonu eski yerine almak için.
         {
             //int index = rastgele ? hangiSira : tahminButtonSayisi; //soldaki değeri bir method oluşturup rastgele bir indexin bilgilerini gönderecek şekilde deiştireceğim.
@@ -156,7 +164,7 @@ namespace kelimeciniz
             else
                 yenibuttonLeft = 10;
 
-            tahminButtonSayisi--;
+            tahminButtonSayisi = TahminiBS();
             bakilanIndexler[tahminButtonSayisi] = false;
 
 
@@ -187,29 +195,34 @@ namespace kelimeciniz
 
         private async void EskiBilinenKelimeNeydi() //Kelimeyi doğru tahmin edince 1.5 saniye sonrasında yeni kelime geliyor.
         {
+            button2.Enabled = false;
             dogruTahmin = 0;
             await Task.Delay(1500);
             YeniKelimeGetir();
         }
+        int tekrarTekrarTekrarMiGirmeyeCalisio = 0;
 
         private void DogruTahminMi(Button buton) //Harfin doğru sırada olup olmadığını öğrenmek için.
         {
-            //int index = rastgele ? hangiSira : dogruTahmin;
-            if (buton.Text == kelime[dogruTahmin].ToString())
-            {
-                if (buton.Location == butonTahminBilgi[dogruTahmin].Konum)
-                {
-                    buton.Enabled = false;
-                }
-                dogruTahmin++;
+            int say = 0;
+                foreach (var i in buttonTahminList)
+                if (i.Enabled == false)
+                    say++;
 
-               
-            } 
+            dogruTahmin = say;
+
+                if (buton.Text == kelime[dogruTahmin].ToString())
+                {
+                    if (buton.Location == butonTahminBilgi[dogruTahmin].Konum)
+                    {
+                        buton.Enabled = false;
+                    }
+                    dogruTahmin++;
+                }
         }
 
-        private void Button_Click(object sender, EventArgs e)
+            private void Button_Click(object sender, EventArgs e)
         {
-            
                 char harf = default;
                 Button butonIslem = (Button)sender;
                 harf = Convert.ToChar(butonIslem.Text);
@@ -217,6 +230,8 @@ namespace kelimeciniz
 
                 this.Controls.Remove(butonIslem); // Button'u formdan kaldır
                 buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
+
+            tahminButtonSayisi = TahminiBS();
 
                 if (buttonLeft > 10)
                     buttonLeft -= 40;
@@ -242,8 +257,8 @@ namespace kelimeciniz
                 buttonTahminList.Add(newButton);
                 newButton.Click += TahminButtonGeriCek_Click;
 
-                if (kelime.Length >= tahminButtonSayisi)
-                    tahminButtonSayisi++;
+                if (butonBilgi.Count() >= tahminButtonSayisi)
+                    tahminButtonSayisi = TahminiBS();
                 else tahminButtonSayisi = 0;
                 this.Controls.Add(newButton);
 
@@ -289,37 +304,56 @@ namespace kelimeciniz
                 this.Controls.Remove(buton);
             }
 
+            buttonList.Clear();
+            buttonTahminList.Clear();
+
             OlusturVeDuzenleButonlar();
             button2.Enabled = true;
         }
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
             YeniKelimeGetir();
         }
 
 
-        private void button2_Click(object sender, EventArgs e)
+        private async void button2_Click(object sender, EventArgs e)
         {
             // Butonu devre dışı bırak
             button2.Enabled = false;
-
-            int suankiDogruTahmin = dogruTahmin;
-            for (int i = 0; i < buttonList.Count; i++)
+            bool devamMi = true;
+            foreach (var i in buttonTahminList)
             {
-                DogruTahminMi(buttonList[i]);
-                if (dogruTahmin != suankiDogruTahmin && !bakilanButtonNameler.Contains(buttonList[i].Name))
+                if (!i.Enabled)
+                    devamMi = true;
+                else
                 {
-                    if(dogruTahmin>0)
-                        dogruTahmin--;
-                    buttonList[i].PerformClick();
-                    break;
+                    await Task.Delay(2000);
+                    button2.Enabled = true;
+                    return;
                 }
             }
+            if (devamMi)
+            {
+                int suankiDogruTahmin = dogruTahmin;
+                for (int i = 0; i < buttonList.Count; i++)
+                {
+                    DogruTahminMi(buttonList[i]);
+                    if (dogruTahmin != suankiDogruTahmin && !bakilanButtonNameler.Contains(buttonList[i].Name))
+                    {
+                        if (dogruTahmin > 0)
+                            dogruTahmin--;
+                        buttonList[i].PerformClick();
+                        break;
+                    }
+                }
+                
+            }
+            button2.Enabled = true;
+
+            if (buttonTiklamaSayisi++ >= kelime.Length)// Bu değeri her kelimede sıfırlamak yerine toplam 4 hakla sınırlayıp hak verebilrim bir
+                button2.Enabled = false;
 
             // İşlem tamamlandığında butonu etkinleştir
-            button2.Enabled = true;
-            if (buttonTiklamaSayisi++ >= kelime.Length)// Bu değeri her kelimede sıfırlamak yerine toplam 4 hakla sınırlayıp hak verebilrim bir de tahmin buttonları maks 6 kadar yanlış yerleştirmee izin vereblr. 
-                button2.Enabled = false;
         }
 
     }
