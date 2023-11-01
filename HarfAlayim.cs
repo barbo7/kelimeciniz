@@ -34,8 +34,7 @@ namespace kelimeciniz
         int left = 10;
         int tahminButtonSayisi = 0;
         int dogruTahmin = 0;
-        int buttonTiklamaSayisi = 1;
-
+        int kacHarfli = 3;
         public HarfAlayim()
         {
             InitializeComponent();
@@ -83,22 +82,26 @@ namespace kelimeciniz
         again:
             Tuple<string, string> veri = gs.RastgeleKelimeGetirVTOrMyList(true);
             kelime = veri.Item2;
-            if (veri.Item2.Length >= 16)
+            int kelimeUzunluk = veri.Item2.Length;
+            if (kelimeUzunluk <= 16 && kelimeUzunluk==kacHarfli )
+            {
+                indexNereyeGitti = new int[kelime.Length];
+                for (int i = 0; i < kelime.Length; i++)
+                    indexNereyeGitti[i] = i;
+
+
+                birOncekiKelime.Add(kelime, veri.Item1);//Türkçe-İngilizce
+                label1.Text = veri.Item1;
+
+                bakilanIndexler = new bool[kelime.Length];
+            }
+            else
             {
                 buttonLeft = 10;
                 goto again;
             }
 
-            indexNereyeGitti = new int[kelime.Length];
-            for (int i = 0; i < kelime.Length; i++)
-                indexNereyeGitti[i] = i;
-
             string karisikkelime = KelimeKaristir(kelime);
-
-            birOncekiKelime.Add(kelime, veri.Item1);//Türkçe-İngilizce
-            label1.Text = veri.Item1;
-
-            bakilanIndexler = new bool[kelime.Length];
 
             for (int i = 0; i < karisikkelime.Length; i++)
             {
@@ -140,6 +143,8 @@ namespace kelimeciniz
 
             if (birOncekiKelimeKey != "")
                 label2.Text = birOncekiKelime[birOncekiKelimeKey] + "\n" + birOncekiKelimeKey;
+            if (kacHarfli <= 16)
+                kacHarfli++;
         }
         private int TahminiBS()
         {
@@ -205,20 +210,20 @@ namespace kelimeciniz
         private void DogruTahminMi(Button buton) //Harfin doğru sırada olup olmadığını öğrenmek için.
         {
             int say = 0;
-                foreach (var i in buttonTahminList)
+            foreach (var i in buttonTahminList)
                 if (i.Enabled == false)
                     say++;
 
             dogruTahmin = say;
 
-                if (buton.Text == kelime[dogruTahmin].ToString())
+            if (buton.Text == kelime[dogruTahmin].ToString())
+            {
+                if (buton.Location == butonTahminBilgi[dogruTahmin].Konum)
                 {
-                    if (buton.Location == butonTahminBilgi[dogruTahmin].Konum)
-                    {
-                        buton.Enabled = false;
-                    }
-                    dogruTahmin++;
+                    buton.Enabled = false;
                 }
+                dogruTahmin++;
+            }
         }
 
             private void Button_Click(object sender, EventArgs e)
@@ -231,7 +236,7 @@ namespace kelimeciniz
                 this.Controls.Remove(butonIslem); // Button'u formdan kaldır
                 buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
 
-            tahminButtonSayisi = TahminiBS();
+                tahminButtonSayisi = TahminiBS();
 
                 if (buttonLeft > 10)
                     buttonLeft -= 40;
@@ -292,7 +297,6 @@ namespace kelimeciniz
             tahminButtonSayisi = 0;
             buttonLeft = 10;
             yenibuttonLeft = 10;
-            buttonTiklamaSayisi = 0;
             birOncekiKelimeKey = kelime;
 
             foreach (Button buton in buttonList)
@@ -310,7 +314,7 @@ namespace kelimeciniz
             OlusturVeDuzenleButonlar();
             button2.Enabled = true;
         }
-        private async void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
             YeniKelimeGetir();
         }
@@ -318,7 +322,6 @@ namespace kelimeciniz
 
         private async void button2_Click(object sender, EventArgs e)
         {
-            // Butonu devre dışı bırak
             button2.Enabled = false;
             bool devamMi = true;
             foreach (var i in buttonTahminList)
@@ -327,6 +330,7 @@ namespace kelimeciniz
                     devamMi = true;
                 else
                 {
+                    devamMi = false;
                     await Task.Delay(2000);
                     button2.Enabled = true;
                     return;
@@ -334,28 +338,23 @@ namespace kelimeciniz
             }
             if (devamMi)
             {
-                int suankiDogruTahmin = dogruTahmin;
-                for (int i = 0; i < buttonList.Count; i++)
+                int kacHarfGelsin = Convert.ToInt32(Math.Ceiling(kelime.Length * 0.51));//Kelimenin harflerinin 3de2'sini getirmeyi amaçlıyorum.
+                for(int m=0;m<kacHarfGelsin;m++)
                 {
-                    DogruTahminMi(buttonList[i]);
-                    if (dogruTahmin != suankiDogruTahmin && !bakilanButtonNameler.Contains(buttonList[i].Name))
+                    int suankiDogruTahmin = dogruTahmin;//Bu değerin değişip değişmediğini aşağıda kontrol ederek şartların içerisine giriyorum.
+                    for (int i = 0; i < buttonList.Count; i++)
                     {
-                        if (dogruTahmin > 0)
-                            dogruTahmin--;
-                        buttonList[i].PerformClick();
-                        break;
+                        DogruTahminMi(buttonList[i]);
+                        if (dogruTahmin != suankiDogruTahmin && !bakilanButtonNameler.Contains(buttonList[i].Name))
+                        {
+                            await Task.Delay(1000);
+                            buttonList[i].PerformClick();
+                            break;
+                        }
                     }
                 }
-                
             }
-            button2.Enabled = true;
-
-            if (buttonTiklamaSayisi++ >= kelime.Length)// Bu değeri her kelimede sıfırlamak yerine toplam 4 hakla sınırlayıp hak verebilrim bir
-                button2.Enabled = false;
-
-            // İşlem tamamlandığında butonu etkinleştir
         }
-
     }
     public class EklenenButtonBilgi
     {
