@@ -155,9 +155,10 @@ namespace kelimeciniz
                 yenibuttonLeft -= 40;
             else
                 yenibuttonLeft = 10;
-            bakilanIndexler[tahminButtonSayisi] = false;
 
             tahminButtonSayisi--;
+            bakilanIndexler[tahminButtonSayisi] = false;
+
 
             if (buttonTahminList.Count < 1)
             {
@@ -186,7 +187,7 @@ namespace kelimeciniz
 
         private async void EskiBilinenKelimeNeydi() //Kelimeyi doğru tahmin edince 1.5 saniye sonrasında yeni kelime geliyor.
         {
-            birOncekiKelimeKey = kelime;
+            dogruTahmin = 0;
             await Task.Delay(1500);
             YeniKelimeGetir();
         }
@@ -199,20 +200,16 @@ namespace kelimeciniz
                 if (buton.Location == butonTahminBilgi[dogruTahmin].Konum)
                 {
                     buton.Enabled = false;
-
                 }
                 dogruTahmin++;
-                if (dogruTahmin >= kelime.Length)
-                {
-                    EskiBilinenKelimeNeydi();
-                }
+
+               
             } 
         }
 
         private void Button_Click(object sender, EventArgs e)
         {
-            if(!bakilanIndexler[tahminButtonSayisi])
-            {
+            
                 char harf = default;
                 Button butonIslem = (Button)sender;
                 harf = Convert.ToChar(butonIslem.Text);
@@ -220,9 +217,6 @@ namespace kelimeciniz
 
                 this.Controls.Remove(butonIslem); // Button'u formdan kaldır
                 buttonList.Remove(butonIslem); // Button'u liste içinden kaldır
-
-                if (bakilanButtonNameler.Contains(butonIsim))
-                    return;
 
                 if (buttonLeft > 10)
                     buttonLeft -= 40;
@@ -252,8 +246,11 @@ namespace kelimeciniz
                     tahminButtonSayisi++;
                 else tahminButtonSayisi = 0;
                 this.Controls.Add(newButton);
-            }
 
+            if (dogruTahmin > kelime.Length-1)
+            {
+                EskiBilinenKelimeNeydi();
+            }
         }
 
         public string KelimeKaristir(string word)// Kelimenin harflerini bölüp karıştırdığım bölüm.
@@ -277,12 +274,12 @@ namespace kelimeciniz
             butonBilgi.Clear();
             butonTahminBilgi.Clear();
             bakilanButtonNameler.Clear();
-            dogruTahmin = 0;
             tahminButtonSayisi = 0;
             buttonLeft = 10;
             yenibuttonLeft = 10;
             buttonTiklamaSayisi = 0;
-            
+            birOncekiKelimeKey = kelime;
+
             foreach (Button buton in buttonList)
             {
                 this.Controls.Remove(buton);
@@ -310,9 +307,10 @@ namespace kelimeciniz
             for (int i = 0; i < buttonList.Count; i++)
             {
                 DogruTahminMi(buttonList[i]);
-                if (dogruTahmin != suankiDogruTahmin)
+                if (dogruTahmin != suankiDogruTahmin && !bakilanButtonNameler.Contains(buttonList[i].Name))
                 {
-                    dogruTahmin--;
+                    if(dogruTahmin>0)
+                        dogruTahmin--;
                     buttonList[i].PerformClick();
                     break;
                 }
@@ -320,7 +318,7 @@ namespace kelimeciniz
 
             // İşlem tamamlandığında butonu etkinleştir
             button2.Enabled = true;
-            if (buttonTiklamaSayisi++ >= 3)// Bu değeri her kelimede sıfırlamak yerine toplam 4 hakla sınırlayıp hak verebilrim bir de tahmin buttonları maks 6 kadar yanlış yerleştirmee izin vereblr. 
+            if (buttonTiklamaSayisi++ >= kelime.Length)// Bu değeri her kelimede sıfırlamak yerine toplam 4 hakla sınırlayıp hak verebilrim bir de tahmin buttonları maks 6 kadar yanlış yerleştirmee izin vereblr. 
                 button2.Enabled = false;
         }
 
