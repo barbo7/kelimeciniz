@@ -35,6 +35,8 @@ namespace kelimeciniz
         int tahminButtonSayisi = 0;
         int dogruTahmin = 0;
         int kacHarfli = 3;
+        int kacDefa = 3;
+
         public HarfAlayim()
         {
             InitializeComponent();
@@ -79,7 +81,7 @@ namespace kelimeciniz
 
         private void OlusturVeDuzenleButonlar()//Keklimeynin harflerini bölmek ve bilgileir eklemek için kullandığım method.
         {
-        again:
+            again:
             Tuple<string, string> veri = gs.RastgeleKelimeGetirVTOrMyList(true);
             kelime = veri.Item2;
             int kelimeUzunluk = veri.Item2.Length;
@@ -94,6 +96,20 @@ namespace kelimeciniz
                 label1.Text = veri.Item1;
 
                 bakilanIndexler = new bool[kelime.Length];
+
+                if (kacHarfli < 9)
+                {
+                    if (kacDefa-- <= 1)
+                    {
+                        kacHarfli++;
+                        kacDefa = 3;
+                    }
+                }
+                else if (kacHarfli <= 16 && kacHarfli >= 9)
+                {
+                    kacHarfli++;
+                }
+                else kacHarfli = 3;
             }
             else
             {
@@ -143,8 +159,8 @@ namespace kelimeciniz
 
             if (birOncekiKelimeKey != "")
                 label2.Text = birOncekiKelime[birOncekiKelimeKey] + "\n" + birOncekiKelimeKey;
-            if (kacHarfli <= 16)
-                kacHarfli++;
+                
+            
         }
         private int TahminiBS()
         {
