@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Speech.Synthesis;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,8 @@ namespace kelimeciniz
         List<Button> buttonTahminList = new List<Button>(); //Tahminleri ekleyip tuttuğum harfler
         List<EklenenButtonBilgi> butonBilgi = new List<EklenenButtonBilgi>(); //Harflerin bilgilerini tuttuğum yer
         List<EklenenButtonBilgi> butonTahminBilgi = new List<EklenenButtonBilgi>(); //Buttonların gitmesi gereken yerleri not aldığım liste
+        SpeechSynthesizer synthesizer = new SpeechSynthesizer();
+
 
         Dictionary<string, string> birOncekiKelime = new Dictionary<string, string>();//Bildiğimiz kelimeleri not almak için kullandığım dict.
         List<string> bakilanButtonNameler = new List<string>();
@@ -97,6 +100,7 @@ namespace kelimeciniz
 
                 bakilanIndexler = new bool[kelime.Length];
 
+
                 if (kacHarfli < 9)
                 {
                     if (kacDefa-- <= 1)
@@ -156,6 +160,7 @@ namespace kelimeciniz
             {
                 buton.Click += Button_Click;
             }
+            synthesizer.Speak(veri.Item1);
 
             if (birOncekiKelimeKey != "")
                 label2.Text = birOncekiKelime[birOncekiKelimeKey] + "\n" + birOncekiKelimeKey;
@@ -218,11 +223,10 @@ namespace kelimeciniz
         {
             button2.Enabled = false;
             dogruTahmin = 0;
+            synthesizer.Speak(kelime);
             await Task.Delay(1500);
             YeniKelimeGetir();
         }
-        int tekrarTekrarTekrarMiGirmeyeCalisio = 0;
-
         private void DogruTahminMi(Button buton) //Harfin doğru sırada olup olmadığını öğrenmek için.
         {
             int say = 0;
@@ -273,6 +277,8 @@ namespace kelimeciniz
 
                 ButtonSira(newButton, tahminButtonSayisi, true);//Bu fonksiyonu kelimeleri düzenli bir sırada eklemek için oluşturdum.
 
+                int d = dogruTahmin;
+
                 DogruTahminMi(newButton);//Koyulan harf doğru mu onu test ediyorum.
 
                 buttonTahminList.Add(newButton);
@@ -281,7 +287,12 @@ namespace kelimeciniz
                 if (butonBilgi.Count() >= tahminButtonSayisi)
                     tahminButtonSayisi = TahminiBS();
                 else tahminButtonSayisi = 0;
+
                 this.Controls.Add(newButton);
+
+                if (d != dogruTahmin)
+                    synthesizer.Speak(newButton.Text);
+
 
             if (dogruTahmin > kelime.Length-1)
             {
@@ -364,6 +375,7 @@ namespace kelimeciniz
                         if (dogruTahmin != suankiDogruTahmin && !bakilanButtonNameler.Contains(buttonList[i].Name))
                         {
                             await Task.Delay(1000);
+                            synthesizer.Speak(buttonList[i].Text);
                             buttonList[i].PerformClick();
                             break;
                         }
