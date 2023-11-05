@@ -41,6 +41,7 @@ namespace kelimeciniz
         private void Form1_Load(object sender, EventArgs e)
         {
             gs= new GoogleSheets();
+            textBox2.Enabled = false;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -80,6 +81,8 @@ namespace kelimeciniz
 
         private void button6_Click(object sender, EventArgs e)
         {
+            listBox1.Items.Clear();
+            listBox2.Items.Clear();
             Tuple<string,string> veri = gs.RastgeleKelimeGetirVTOrMyList(true);
             listBox1.Items.Add(veri.Item1);
             listBox2.Items.Add(veri.Item2);
